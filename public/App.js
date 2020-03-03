@@ -1,126 +1,52 @@
-class ProductList extends React.Component {
-  constructor() {
-    super();
-    this.state = {
-      products: []
-    };
-    this.createProduct = this.createProduct.bind(this);
-  }
+var contentNode = document.getElementById('contents');
 
-  componentDidMount() {
-    this.loadData();
-  }
-
-  async loadData() {
-    const query = `query {
-    productList{
-      id name Price category Image
-    }
-  }`;
-    const response = await fetch('/graphql', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        query
-      })
-    });
-    const result = await response.json();
-    this.setState({
-      products: result.data.productList
-    });
-  }
-
-  async createProduct(product) {
-    const query = `mutation addProduct($product: ProductInputs!) {
-      addProduct(product: $product) {
-        id
-      }
-    }`;
-    const response = await fetch('/graphql', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        query,
-        variables: {
-          product
-        }
-      })
-    });
-
-    if (response) {
-      this.loadData();
-    }
-  }
-
+class ProductAvailable extends React.Component {
   render() {
-    return React.createElement(React.Fragment, null, React.createElement("h2", null, "My Company Inventory"), React.createElement("h4", null, " Showing all the available products"), React.createElement("hr", null), React.createElement(ProductTable, {
-      products: this.state.products
-    }), React.createElement("h4", null, "Add a new product to inventory"), React.createElement("hr", null), React.createElement(ProductAdd, {
-      createProduct: this.createProduct
-    }));
-  }
-
-}
-
-function ProductTable(props) {
-  {
-    const productRows = props.products.map(product => React.createElement(ProductRow, {
+    const productRows = this.props.products.map(product => React.createElement(ProductRow, {
       key: product.id,
       product: product
     }));
     return React.createElement("table", {
       className: "bordered-table"
-    }, React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", null, "Product Name"), React.createElement("th", null, "Category"), React.createElement("th", null, "Price"), React.createElement("th", null, "Image"))), React.createElement("tbody", null, productRows));
+    }, React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", null, "Product Name"), React.createElement("th", null, "Price"), React.createElement("th", null, "Category"), React.createElement("th", null, "Image"))), React.createElement("tbody", null, productRows));
   }
+
 }
 
-function ProductRow(props) {
-  {
-    const product = props.product;
-    return React.createElement("tr", null, React.createElement("td", null, product.name), React.createElement("td", null, product.category), React.createElement("td", null, product.Price), React.createElement("td", null, React.createElement("a", {
-      href: product.Image,
+class ProductRow extends React.Component {
+  render() {
+    const product = this.props.product;
+    return React.createElement("tr", null, React.createElement("td", null, product.name), React.createElement("td", null, "$", product.price), React.createElement("td", null, product.category), React.createElement("td", null, React.createElement("a", {
+      href: product.image,
       target: "_blank"
-    }, "View")));
+    }, " View")));
   }
+
 }
 
 class ProductAdd extends React.Component {
   constructor() {
     super();
     this.onSubmit = this.onSubmit.bind(this);
-    this.state = {
-      Price: '$'
-    };
-    this.handlepriceChange = this.handlepriceChange.bind(this);
   }
 
   onSubmit(e) {
     e.preventDefault();
-    const form = document.forms.productAdd;
-    const product = {
-      name: form.Product_Name.value,
-      Price: form.Price.value.replace('$', ''),
-      Image: form.Image_URL.value,
-      category: form.category.value
-    };
-    this.props.createProduct(product);
-    form.Product_Name.value = "";
-    form.Price.value = "$", form.Image_URL.value = "";
-    form.category.value = "";
-  }
-
-  handlepriceChange() {
-    this.setState({
-      Price: document.forms.productAdd.Price.value
+    var form = document.forms.productAdd;
+    this.props.createProduct({
+      id: form.id.value,
+      name: form.productName.value,
+      price: form.price.value,
+      category: form.category.value,
+      image: form.Image_URL.value
     });
+    form.productName.value = '';
+    form.price.value = '';
+    form.Image_URL.value = '';
   }
 
   render() {
-    return React.createElement("form", {
+    return React.createElement("div", null, React.createElement("form", {
       name: "productAdd",
       onSubmit: this.onSubmit
     }, React.createElement("div", {
@@ -141,13 +67,13 @@ class ProductAdd extends React.Component {
       className: "gridview"
     }, React.createElement("label", null, "Price Per Unit "), " ", React.createElement("br", null), React.createElement("input", {
       type: "text",
-      name: "Price",
+      name: "price",
       placeholder: "$"
     })), React.createElement("div", {
       className: "gridview"
     }, React.createElement("label", null, " Product Name"), React.createElement("br", null), React.createElement("input", {
       type: "text",
-      name: "Product_Name"
+      name: "productName"
     })), React.createElement("div", {
       className: "gridview"
     }, React.createElement("label", null, "Image URL"), React.createElement("br", null), React.createElement("input", {
@@ -156,10 +82,79 @@ class ProductAdd extends React.Component {
       placeholder: "URL"
     })), React.createElement("div", null, React.createElement("button", {
       type: "submit"
-    }, "Add Product")));
+    }, "Add Product"))));
   }
 
 }
 
-const element = React.createElement(ProductList, null);
-ReactDOM.render(element, document.getElementById('contents'));
+const products = [];
+
+class ProductList extends React.Component {
+  constructor() {
+    super();
+    this.state = {
+      products: []
+    };
+    this.createProduct = this.createProduct.bind(this);
+  }
+
+  componentDidMount() {
+    this.loadData();
+  }
+
+  async loadData() {
+    const query = `query {
+      productList{
+        id name price category image
+      }
+    }`;
+    const response = await fetch('/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        query
+      })
+    });
+    const result = await response.json();
+    this.setState({
+      products: result.data.productList
+    });
+  }
+
+  async createProduct(product) {
+    const query = `mutation addProduct($product: ProductInputs!) {
+        addProduct(product: $product) {
+          id
+        }
+      }`;
+    const response = await fetch('/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        query,
+        variables: {
+          product
+        }
+      })
+    });
+
+    if (response) {
+      this.loadData();
+    }
+  }
+
+  render() {
+    return React.createElement("div", null, React.createElement("h1", null, "My Company Inventory"), React.createElement("h2", null, "Showing all available products"), React.createElement("hr", null), React.createElement(ProductAvailable, {
+      products: this.state.products
+    }), React.createElement("h2", null, "Add a new product to inventory"), React.createElement("hr", null), React.createElement(ProductAdd, {
+      createProduct: this.createProduct
+    }));
+  }
+
+}
+
+ReactDOM.render(React.createElement(ProductList, null), contentNode);

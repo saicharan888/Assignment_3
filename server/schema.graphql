@@ -9,8 +9,8 @@ type Product{
     id: Int!
     category: category!
 	name: String!
-	Price: Float
-	Image: String
+	price: Float
+	image: String
 
 }
 
@@ -18,8 +18,8 @@ input ProductInputs {
   
     category: category!
 	name: String!
-	Price: Float
-	Image: String
+	price: Float
+	image: String
 }
 
 type Query{
